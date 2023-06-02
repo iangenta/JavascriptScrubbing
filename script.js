@@ -1,69 +1,92 @@
-var timeline = document.querySelector('.timeline');
-var scrubber = document.querySelector('.scrubber');
+var timeline = document.getElementById('timeline');
+var scrubber = document.getElementById('scrubber');
+var mediaContainer = document.getElementById('media-container');
 var mediaItems = Array.from(document.querySelectorAll('.media'));
-
 var totalDuration = mediaItems.reduce((total, item) => total + parseFloat(item.getAttribute('data-duration')), 0);
+var dragging = false;
+var activeVideo = null;
 
-timeline.addEventListener('mousemove', function (e) {
+// Update the timeline position and active media based on mouse movement
+
+timeline.addEventListener('mousemove', function(e) {
+  if (!dragging) {
     var timelineRect = timeline.getBoundingClientRect();
     var position = (e.clientX - timelineRect.left) / timelineRect.width;
-
-    scrubber.style.left = position * 100 + '%';
-
     var currentTime = position * totalDuration;
-    var currentMedia = findMediaByTime(currentTime);
 
-    mediaItems.forEach(function (item) {
-        item.style.opacity = '0';
-        if (item.getAttribute('data-type') === 'video') {
-            item.querySelector('video').pause();
-        }
-    });
-
-    if (currentMedia) {
-        currentMedia.style.opacity = '1';
-
-        if (currentMedia.getAttribute('data-type') === 'video') {
-            var video = currentMedia.querySelector('video');
-            video.currentTime = currentTime - cumulativeTime(currentMedia);
-            video.play();
-        }
-    }
+    updateScrubberPosition(position);
+    updateMedia(currentTime);
+  }
 });
+// Start dragging the scrubber and update the timeline position and active media
 
-timeline.addEventListener('mouseleave', function () {
-    mediaItems.forEach(function (item) {
-        item.style.opacity = '0';
-        if (item.getAttribute('data-type') === 'video') {
-            item.querySelector('video').pause();
-        }
-    });
+timeline.addEventListener('mousedown', function(e) {
+  dragging = true;
+  timeline.classList.add('dragging');
+
+  var timelineRect = timeline.getBoundingClientRect();
+  var position = (e.clientX - timelineRect.left) / timelineRect.width;
+  var currentTime = position * totalDuration;
+
+  updateScrubberPosition(position);
+  updateMedia(currentTime);
 });
+// Stop dragging the scrubber
 
-function findMediaByTime(time) {
-    var cumulativeTime = 0;
-
-    for (var i = 0; i < mediaItems.length; i++) {
-        var mediaItem = mediaItems[i];
-        var duration = parseFloat(mediaItem.getAttribute('data-duration'));
-
-        if (time >= cumulativeTime && time < cumulativeTime + duration) {
-            return mediaItem;
-        }
-
-        cumulativeTime += duration;
+window.addEventListener('mouseup', function() {
+  if (dragging) {
+    dragging = false;
+    timeline.classList.remove('dragging');
+    if (activeVideo) {
+      activeVideo.play();
     }
+  }
+});
+// Continue updating the timeline position and active media while dragging
 
-    return null;
+window.addEventListener('mousemove', function(e) {
+  if (dragging) {
+    var timelineRect = timeline.getBoundingClientRect();
+    var position = (e.clientX - timelineRect.left) / timelineRect.width;
+    var currentTime = position * totalDuration;
+
+    updateScrubberPosition(position);
+    updateMedia(currentTime);
+  }
+});
+// Update the position of the scrubber on the timeline
+
+function updateScrubberPosition(position) {
+  scrubber.style.left = position * 100 + '%';
 }
+// Update the active media based on the current time
 
-function cumulativeTime(mediaItem) {
-    var index = mediaItems.indexOf(mediaItem);
-    var cumulative = 0;
+function updateMedia(currentTime) {
+  var cumulativeTime = 0;
+  var activeMedia = null;
 
-    for (var i = 0; i < index; i++) {
-        cumulative += parseFloat(mediaItems[i].getAttribute('data-duration'));
+  mediaItems.forEach(function(item) {
+    var duration = parseFloat(item.getAttribute('data-duration'));
+    cumulativeTime += duration;
+
+    if (!activeMedia && currentTime < cumulativeTime) {
+      activeMedia = item;
+      var mediaType = item.getAttribute('data-type');
+      var mediaContent = item.querySelector('video') || item.querySelector('img');
+
+      if (mediaType === 'video') {
+        var position = (currentTime - (cumulativeTime - duration)) / duration;
+        mediaContent.currentTime = position * mediaContent.duration;
+        activeVideo = mediaContent;
+      }
     }
+  });
 
-    return cumulative;
+  mediaItems.forEach(function(item) {
+    if (item === activeMedia) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
 }
