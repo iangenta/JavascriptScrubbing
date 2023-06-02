@@ -42,9 +42,6 @@ function handleEndEvent() {
   if (dragging) {
     dragging = false;
     timeline.classList.remove('dragging');
-    if (activeVideo) {
-      activeVideo.play();
-    }
   }
 }
 
