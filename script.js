@@ -6,34 +6,39 @@ var totalDuration = mediaItems.reduce((total, item) => total + parseFloat(item.g
 var dragging = false;
 var activeVideo = null;
 
-// Update the timeline position and active media based on mouse movement
+// Function to get the position on the timeline based on event coordinates
 
-timeline.addEventListener('mousemove', function(e) {
+function getPosition(event) {
+  var timelineRect = timeline.getBoundingClientRect();
+  var clientX = event.clientX || event.touches[0].clientX;
+  return (clientX - timelineRect.left) / timelineRect.width;
+}
+
+// Update the timeline position and active media based on mouse movement and touch events
+
+function handleMoveEvent(event) {
+  event.preventDefault();
   if (!dragging) {
-    var timelineRect = timeline.getBoundingClientRect();
-    var position = (e.clientX - timelineRect.left) / timelineRect.width;
+    var position = getPosition(event);
     var currentTime = position * totalDuration;
 
     updateScrubberPosition(position);
     updateMedia(currentTime);
   }
-});
-// Start dragging the scrubber and update the timeline position and active media
+}
 
-timeline.addEventListener('mousedown', function(e) {
+function handleStartEvent(event) {
   dragging = true;
   timeline.classList.add('dragging');
 
-  var timelineRect = timeline.getBoundingClientRect();
-  var position = (e.clientX - timelineRect.left) / timelineRect.width;
+  var position = getPosition(event);
   var currentTime = position * totalDuration;
 
   updateScrubberPosition(position);
   updateMedia(currentTime);
-});
-// Stop dragging the scrubber
+}
 
-window.addEventListener('mouseup', function() {
+function handleEndEvent() {
   if (dragging) {
     dragging = false;
     timeline.classList.remove('dragging');
@@ -41,24 +46,33 @@ window.addEventListener('mouseup', function() {
       activeVideo.play();
     }
   }
-});
-// Continue updating the timeline position and active media while dragging
+}
 
-window.addEventListener('mousemove', function(e) {
+function handleTouchMove(event) {
+  event.preventDefault();
   if (dragging) {
-    var timelineRect = timeline.getBoundingClientRect();
-    var position = (e.clientX - timelineRect.left) / timelineRect.width;
+    var position = getPosition(event);
     var currentTime = position * totalDuration;
 
     updateScrubberPosition(position);
     updateMedia(currentTime);
   }
-});
+}
+
+timeline.addEventListener('mousemove', handleMoveEvent);
+timeline.addEventListener('mousedown', handleStartEvent);
+window.addEventListener('mouseup', handleEndEvent);
+
+timeline.addEventListener('touchmove', handleTouchMove, { passive: false });
+timeline.addEventListener('touchstart', handleStartEvent, { passive: false });
+window.addEventListener('touchend', handleEndEvent);
+
 // Update the position of the scrubber on the timeline
 
 function updateScrubberPosition(position) {
   scrubber.style.left = position * 100 + '%';
 }
+
 // Update the active media based on the current time
 
 function updateMedia(currentTime) {
