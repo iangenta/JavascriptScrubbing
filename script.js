@@ -11,7 +11,7 @@ var activeVideo = null;
 function getPosition(event) {
   var timelineRect = timeline.getBoundingClientRect();
   var clientX = event.clientX || event.touches[0].clientX;
-  return (clientX - timelineRect.left) / timelineRect.width;
+  return parseFloat(((clientX - timelineRect.left) / timelineRect.width).toFixed(2)); // Rounded to two decimals
 }
 
 // Update the timeline position and active media based on mouse movement and touch events
@@ -67,7 +67,7 @@ window.addEventListener('touchend', handleEndEvent);
 // Update the position of the scrubber on the timeline
 
 function updateScrubberPosition(position) {
-  scrubber.style.left = position * 100 + '%';
+  scrubber.style.left = (position * 100).toFixed(2) + '%'; // Rounded to two decimals
 }
 
 // Update the active media based on the current time
@@ -86,7 +86,7 @@ function updateMedia(currentTime) {
       var mediaContent = item.querySelector('video') || item.querySelector('img');
 
       if (mediaType === 'video') {
-        var position = (currentTime - (cumulativeTime - duration)) / duration;
+        var position = parseFloat(((currentTime - (cumulativeTime - duration)) / duration).toFixed(2)); // Rounded to two decimals
         mediaContent.currentTime = position * mediaContent.duration;
         activeVideo = mediaContent;
       }
