@@ -58,6 +58,17 @@ document.addEventListener("DOMContentLoaded", function () {
     timeline.addEventListener("mousedown", handleStartEvent);
     mediaContainer.addEventListener("mouseenter", handleStartEvent);
     window.addEventListener("mouseup", handleEndEvent);
+
+    // Adjust data-duration of videos based on their actual duration
+    mediaItems.forEach(function (item) {
+      if (item.getAttribute("data-type") === "video") {
+        var video = item.querySelector("video");
+        video.onloadedmetadata = function () {
+          var duration = video.duration;
+          item.setAttribute("data-duration", duration.toFixed(1));
+        };
+      }
+    });
   });
 
   function updateScrubberPosition(scrubber, position) {
