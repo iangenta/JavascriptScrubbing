@@ -7,10 +7,13 @@ document.addEventListener("DOMContentLoaded", function () {
     var scrubber = timeline.querySelector(".scrubber");
     var mediaContainer = timeline.querySelector(".media-container");
     var mediaItems = Array.from(mediaContainer.querySelectorAll(".media"));
-    var totalDuration = mediaItems.reduce(
-      (total, item) => total + parseFloat(item.getAttribute("data-duration")),
-      0
-    );
+
+    function getTotalDuration(items) {
+      return items.reduce(
+        (total, item) => total + parseFloat(item.getAttribute("data-duration")),
+        0
+      );
+    }
 
     function getPosition(event) {
       var timelineRect = timeline.getBoundingClientRect();
@@ -25,6 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
       event.preventDefault();
       if (draggings[index]) {
         var position = getPosition(event);
+        var totalDuration = getTotalDuration(mediaItems); // Recalculate total duration
         var currentTime = position * totalDuration;
         updateScrubberPosition(scrubber, position);
         updateMedia(mediaItems, currentTime, totalDuration, index); // Pass totalDuration here
@@ -36,6 +40,7 @@ document.addEventListener("DOMContentLoaded", function () {
       timeline.classList.add("dragging");
 
       var position = getPosition(event);
+      var totalDuration = getTotalDuration(mediaItems); // Recalculate total duration
       var currentTime = position * totalDuration;
 
       updateScrubberPosition(scrubber, position);
