@@ -1,17 +1,22 @@
-var timelines = Array.from(document.querySelectorAll('.timeline'));
+var timelines = Array.from(document.querySelectorAll(".timeline"));
 var draggings = [];
 var activeVideos = [];
 
-timelines.forEach(function(timeline, index) {
-  var scrubber = timeline.querySelector('.scrubber');
-  var mediaContainer = timeline.querySelector('.media-container');
-  var mediaItems = Array.from(mediaContainer.querySelectorAll('.media'));
-  var totalDuration = mediaItems.reduce((total, item) => total + parseFloat(item.getAttribute('data-duration')), 0);
+timelines.forEach(function (timeline, index) {
+  var scrubber = timeline.querySelector(".scrubber");
+  var mediaContainer = timeline.querySelector(".media-container");
+  var mediaItems = Array.from(mediaContainer.querySelectorAll(".media"));
+  var totalDuration = mediaItems.reduce(
+    (total, item) => total + parseFloat(item.getAttribute("data-duration")),
+    0
+  );
 
   function getPosition(event) {
     var timelineRect = timeline.getBoundingClientRect();
     var clientX = event.clientX || event.touches[0].clientX;
-    return parseFloat(((clientX - timelineRect.left) / timelineRect.width).toFixed(2)); // Rounded to two decimals
+    return parseFloat(
+      ((clientX - timelineRect.left) / timelineRect.width).toFixed(2)
+    ); // Rounded to two decimals
   }
 
   function handleMoveEvent(event) {
@@ -26,7 +31,7 @@ timelines.forEach(function(timeline, index) {
 
   function handleStartEvent(event) {
     draggings[index] = true;
-    timeline.classList.add('dragging');
+    timeline.classList.add("dragging");
 
     var position = getPosition(event);
     var currentTime = position * totalDuration;
@@ -38,42 +43,48 @@ timelines.forEach(function(timeline, index) {
     var cumulativeTime = 0;
     var activeMedia = null;
 
-    mediaItems.forEach(function(item) {
-      var duration = parseFloat(item.getAttribute('data-duration'));
+    mediaItems.forEach(function (item) {
+      var duration = parseFloat(item.getAttribute("data-duration"));
       cumulativeTime += duration;
 
       if (!activeMedia && currentTime < cumulativeTime) {
         activeMedia = item;
+        // Define the duration variable within this context
+        var duration = parseFloat(item.getAttribute("data-duration"));
+        // Calculate the playback time using totalDuration
+        var playbackTime = currentTime - (cumulativeTime - totalDuration);
+        // Assign the playback time to the active media
+        if (activeMedia.getAttribute("data-type") === "video") {
+          var video = activeMedia.querySelector("video");
+          // Check if the video is paused before calling play()
+          if (video.paused) {
+            video.currentTime = playbackTime;
+            if (activeVideos[index] && activeVideos[index] !== video) {
+              pauseActiveVideo(index);
+            }
+            activeVideos[index] = video;
+            video.play().catch(function (error) {
+              // Handle any errors while attempting to play the video
+              console.error("Error while attempting to play the video:", error);
+            });
+          }
+        }
       }
     });
 
-    mediaItems.forEach(function(item) {
+    mediaItems.forEach(function (item) {
       if (item === activeMedia) {
-        item.classList.add('active');
+        item.classList.add("active");
       } else {
-        item.classList.remove('active');
+        item.classList.remove("active");
       }
     });
-
-    // Play the video from the current time
-    var mediaType = activeMedia.getAttribute('data-type');
-    var mediaContent = activeMedia.querySelector('video') || activeMedia.querySelector('img');
-
-    if (mediaType === 'video' && mediaContent.paused) {
-      var video = mediaContent;
-      video.currentTime = currentTime - (cumulativeTime - duration);
-      if (activeVideos[index] && activeVideos[index] !== video) {
-        pauseActiveVideo(index);
-      }
-      activeVideos[index] = video;
-      video.play();
-    }
   }
 
   function handleEndEvent() {
     if (draggings[index]) {
       draggings[index] = false;
-      timeline.classList.remove('dragging');
+      timeline.classList.remove("dragging");
       pauseActiveVideo(index);
     }
   }
@@ -89,26 +100,26 @@ timelines.forEach(function(timeline, index) {
     }
   }
 
-  timeline.addEventListener('mousemove', handleMoveEvent);
-  timeline.addEventListener('mousedown', handleStartEvent);
-  mediaContainer.addEventListener('mouseenter', handleStartEvent);
-  window.addEventListener('mouseup', handleEndEvent);
+  timeline.addEventListener("mousemove", handleMoveEvent);
+  timeline.addEventListener("mousedown", handleStartEvent);
+  mediaContainer.addEventListener("mouseenter", handleStartEvent);
+  window.addEventListener("mouseup", handleEndEvent);
 
-  timeline.addEventListener('touchmove', handleTouchMove, { passive: false });
-  timeline.addEventListener('touchstart', handleStartEvent, { passive: false });
-  window.addEventListener('touchend', handleEndEvent);
+  timeline.addEventListener("touchmove", handleTouchMove, { passive: false });
+  timeline.addEventListener("touchstart", handleStartEvent, { passive: false });
+  window.addEventListener("touchend", handleEndEvent);
 });
 
 function updateScrubberPosition(scrubber, position) {
-  scrubber.style.left = (position * 100).toFixed(2) + '%'; // Rounded to two decimals
+  scrubber.style.left = (position * 100).toFixed(2) + "%"; // Rounded to two decimals
 }
 
 function updateMedia(mediaItems, currentTime, index) {
   var cumulativeTime = 0;
   var activeMedia = null;
 
-  mediaItems.forEach(function(item) {
-    var duration = parseFloat(item.getAttribute('data-duration'));
+  mediaItems.forEach(function (item) {
+    var duration = parseFloat(item.getAttribute("data-duration"));
     cumulativeTime += duration;
 
     if (!activeMedia && currentTime < cumulativeTime) {
@@ -116,11 +127,11 @@ function updateMedia(mediaItems, currentTime, index) {
     }
   });
 
-  mediaItems.forEach(function(item) {
+  mediaItems.forEach(function (item) {
     if (item === activeMedia) {
-      item.classList.add('active');
+      item.classList.add("active");
     } else {
-      item.classList.remove('active');
+      item.classList.remove("active");
     }
   });
 }
